@@ -26,7 +26,7 @@ namespace entropy
 		//--------------------------------------------------------------
 		void Interlude::setup()
 		{
-
+			part.setup();
 		}
 		
 		//--------------------------------------------------------------
@@ -50,19 +50,26 @@ namespace entropy
 		//--------------------------------------------------------------
 		void Interlude::update(double dt)
 		{
-			
+			part.update();
 		}
 
 		//--------------------------------------------------------------
 		void Interlude::drawBackBase()
 		{
-			
+
+			this->cameras[entropy::render::Layout::Back]->begin();
+			part.draw(this->cameras[entropy::render::Layout::Back]->getEasyCam());
+
+			this->cameras[entropy::render::Layout::Back]->end();
 		}
 
 		//--------------------------------------------------------------
 		void Interlude::drawFrontBase()
 		{
-
+			this->cameras[entropy::render::Layout::Front]->begin();
+			part.draw(this->cameras[entropy::render::Layout::Front]->getEasyCam() );
+			
+			this->cameras[entropy::render::Layout::Front]->end();
 		}
 
 		//--------------------------------------------------------------

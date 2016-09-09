@@ -2,7 +2,7 @@
 
 #include "entropy/render/Layout.h"
 #include "entropy/scene/Base.h"
-
+#include "entropy/interlude/PassingNoiseParticle.h"
 namespace entropy
 {
 	namespace scene
@@ -48,6 +48,8 @@ namespace entropy
 
 				PARAM_DECLARE("Interlude", dummy);
 			} parameters;
+		protected:
+			PassingNoiseParticle part;
 		};
 	}
 }

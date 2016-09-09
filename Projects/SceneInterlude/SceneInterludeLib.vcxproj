@@ -184,9 +184,20 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\addons\ofxShaderOnTheFly\src\ofxShaderOnTheFly.cpp" />
+    <ClCompile Include="src\entropy\interlude\PassingNoiseParticle.cpp">
+      <DeploymentContent>true</DeploymentContent>
+    </ClCompile>
     <ClCompile Include="src\entropy\scene\Interlude.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\addons\ofxShaderOnTheFly\src\ofxShaderOnTheFly.h" />
+    <ClInclude Include="src\entropy\interlude\PassingNoiseParticle.h">
+      <DeploymentContent>true</DeploymentContent>
+    </ClInclude>
     <ClInclude Include="src\entropy\scene\Interlude.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
 </Project>
