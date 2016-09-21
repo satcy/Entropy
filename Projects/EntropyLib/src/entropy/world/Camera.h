@@ -13,24 +13,38 @@ namespace entropy
 {
 	namespace world
 	{
-		static const string kCamerasTimelinePageName = "Cameras";
+		static const string CameraTimelinePageName = "Cameras";
 		
 		class Camera
 		{
 		public:
+			struct Settings
+			{				
+				Settings();
+				
+				float fov;
+				float nearClip;
+				float farClip;
+				glm::vec3 position;
+				glm::quat orientation;
+			};
+
 			Camera();
 			~Camera();
 
 			void setup(render::Layout layout, std::shared_ptr<ofxTimeline> timeline);
 			void clear();
 
-			void reset();
+			void reset(bool transform);
 
 			void update(bool mouseOverGui);
 			void resize(ofResizeEventArgs & args);
 
 			void begin();
 			void end();
+
+			void applySettings(const Settings & settings);
+			Settings fetchSettings();
 
 			ofEasyCam & getEasyCam();
 
@@ -70,6 +84,7 @@ namespace entropy
 			ofParameter<float> farClip{ "Far Clip", 1000.0f, 0.001f, 1000.0f };
 
 			ofParameter<bool> attachToParent{ "Attach to Parent", false };
+			ofParameter<bool> inheritsSettings{ "Inherits Settings", false };
 			ofParameter<bool> mouseControl{ "Mouse Control", true };
 			ofParameter<bool> relativeYAxis{ "Relative Y Axis", false };
 
@@ -82,6 +97,7 @@ namespace entropy
 				fov,
 				nearClip, farClip,
 				attachToParent,
+				inheritsSettings,
 				mouseControl, relativeYAxis,
 				tiltSpeed, panSpeed, rollSpeed, dollySpeed
 			};

@@ -11,11 +11,7 @@ namespace entropy
 		//--------------------------------------------------------------
 		PoolGL3D::PoolGL3D()
 			: PoolBase()
-		{
-			// Update parameter group.
-			this->parameters.setName("Pool GL 3D");
-			this->parameters.add(filterMode, volumeSize);
-		}
+		{}
 
 		//--------------------------------------------------------------
 		void PoolGL3D::setup()
@@ -64,9 +60,28 @@ namespace entropy
 			this->mesh.addTexCoord(glm::vec2(0.0f, this->dimensions.y));
 
 			// Load the shaders.
-			this->dropShader.load("shaders/passthru.vert", "shaders/drop3D.frag", "shaders/layer.geom");
-			this->rippleShader.load("shaders/passthru.vert", "shaders/ripple3D.frag", "shaders/layer.geom");
-			this->copyShader.load("shaders/passthru.vert", "shaders/copy3D.frag", "shaders/layer.geom");
+			auto shaderSettings = ofShader::Settings();
+			shaderSettings.bindDefaults = true;
+			shaderSettings.intDefines["USE_TEX_ARRAY"] = USE_TEX_ARRAY;
+			shaderSettings.shaderFiles[GL_VERTEX_SHADER] = "shaders/passthru.vert";
+			shaderSettings.shaderFiles[GL_GEOMETRY_SHADER] = "shaders/layer.geom";
+
+			shaderSettings.shaderFiles[GL_FRAGMENT_SHADER] = "shaders/drop3D.frag";
+			this->dropShader.setup(shaderSettings);
+			
+			shaderSettings.shaderFiles[GL_FRAGMENT_SHADER] = "shaders/ripple3D.frag";
+			this->rippleShader.setup(shaderSettings);
+
+			shaderSettings.shaderFiles[GL_FRAGMENT_SHADER] = "shaders/copy3D.frag";
+			this->copyShader.setup(shaderSettings);
+
+			// Init bursts.
+			this->bursts.init();
+
+			// Init parameters.
+			this->parameters.setName("Pool GL 3D");
+			this->parameters.add(filterMode, volumeSize);
+			this->parameters.add(this->bursts.parameters);
 		}
 
 		//--------------------------------------------------------------
@@ -79,26 +94,39 @@ namespace entropy
 			{
 				this->textures[i].clearData();
 			}
+
+			this->bursts.reset();
+		}
+
+		//--------------------------------------------------------------
+		void PoolGL3D::update(double dt)
+		{
+			PoolBase::update(dt);
+
+			if (this->bursts.enabled)
+			{
+				this->bursts.update(dt);
+			}
 		}
 
 		//--------------------------------------------------------------
 		void PoolGL3D::addDrop()
 		{
+			const auto burstPos = glm::vec3(ofRandom(this->dimensions.x), ofRandom(this->dimensions.y), ofRandom(this->dimensions.z));
+			static const auto burstThickness = 1.0f;
+			
 			this->fbos[this->prevIdx].begin();
 			{
 				ofEnableAlphaBlending();
-				ofSetColor(this->dropColor.get());
-
-				const auto burstPos = glm::vec3(ofRandom(this->dimensions.x), ofRandom(this->dimensions.y), ofRandom(this->dimensions.z));
-				const auto burstThickness = 1.0f;
+				ofSetColor((ofRandomuf() < 0.5 ? this->dropColor1.get() : this->dropColor2.get()));
 
 				this->dropShader.begin();
 				{
 					this->dropShader.setUniform3f("uBurst.pos", burstPos);
 					this->dropShader.setUniform1f("uBurst.radius", this->radius);
 					this->dropShader.setUniform1f("uBurst.thickness", burstThickness);
-					//this->dropShader.printActiveUniforms();
-
+					this->dropShader.setUniform3f("uDims", this->dimensions);
+					
 					int minLayer = static_cast<int>(std::max(0.0f, burstPos.z - this->radius - burstThickness));
 					int maxLayer = static_cast<int>(std::min(this->dimensions.z - 1, burstPos.z + this->radius + burstThickness));
 					for (int i = minLayer; i <= maxLayer; ++i) {
@@ -110,6 +138,15 @@ namespace entropy
 				this->dropShader.end();
 			}
 			this->fbos[this->prevIdx].end();
+
+			if (this->bursts.enabled)
+			{
+				static const auto halfVec = glm::vec3(0.5f);
+				auto worldPos = burstPos / this->dimensions;
+				worldPos.y = 1.0f - worldPos.y;
+				worldPos = (worldPos - halfVec) * this->volumeSize.get();
+				this->bursts.addDrop(worldPos, this->radius);
+			}
 		}
 
 		//--------------------------------------------------------------
@@ -161,19 +198,88 @@ namespace entropy
 			this->fbos[this->currIdx].end();
 
 			//this->textures[this->tempIdx].copyTo(this->copyBuffer);
-			//this->textures[this->currIdx].loadData(this->copyBuffer, GL_RGBA);
+			//this->textures[this->currIdx].loadData(this->copyBuffer, ofGetGLFormatFromInternal(this->textures[this->tempIdx].texData.glInternalFormat));
 
 			this->volumetrics.updateTexture(&this->textures[this->currIdx], glm::vec3(1.0f));
+			//this->volumetrics.updateTexture(&this->textures[this->prevIdx], glm::vec3(1.0f));
 		}
 
 		//--------------------------------------------------------------
 		void PoolGL3D::draw()
 		{
-			ofEnableAlphaBlending();
-			
-			this->volumetrics.setRenderSettings(1.0, 1.0, 1.0, 0.1);
-			this->volumetrics.setVolumeTextureFilterMode(this->filterMode);
-			this->volumetrics.drawVolume(0.0f, 0.0f, 0.0f, this->volumeSize, 0);
+			ofPushStyle();
+			{
+				ofEnableAlphaBlending();
+				ofSetColor(255, this->alpha * 255);
+
+				this->volumetrics.setRenderSettings(1.0, 1.0, 1.0, 0.1);
+				this->volumetrics.setVolumeTextureFilterMode(this->filterMode);
+				this->volumetrics.drawVolume(0.0f, 0.0f, 0.0f, this->volumeSize, 0);
+			}
+			ofPopStyle();
+
+			if (this->bursts.enabled)
+			{
+				this->bursts.draw(this->alpha);
+			}
+		}
+
+		//--------------------------------------------------------------
+		void PoolGL3D::gui(ofxPreset::Gui::Settings & settings)
+		{
+			if (ofxPreset::Gui::BeginTree(this->parameters, settings))
+			{
+				ofxPreset::Gui::AddParameter(this->runSimulation);
+				ImGui::SameLine();
+				if (ImGui::Button("Reset Simulation"))
+				{
+					this->resetSimulation = true;
+				}
+
+				ofxPreset::Gui::AddParameter(this->drawBack);
+				ImGui::SameLine();
+				ofxPreset::Gui::AddParameter(this->drawFront);
+
+				ofxPreset::Gui::AddParameter(this->alpha);
+
+				ofxPreset::Gui::AddParameter(this->dropColor1);
+				ofxPreset::Gui::AddParameter(this->dropColor2);
+				ofxPreset::Gui::AddParameter(this->dropping);
+				ofxPreset::Gui::AddParameter(this->dropRate);
+
+				ofxPreset::Gui::AddParameter(this->rippleRate);
+
+				ofxPreset::Gui::AddParameter(this->damping);
+				ofxPreset::Gui::AddParameter(this->radius);
+				ofxPreset::Gui::AddParameter(this->ringSize);
+
+				static const vector<string> labels{ "Nearest", "Linear" };
+				ofxPreset::Gui::AddRadio(this->filterMode, labels, 2);
+				ofxPreset::Gui::AddParameter(this->volumeSize);
+
+				if (ofxPreset::Gui::BeginTree(this->bursts.parameters, settings))
+				{
+					ofxPreset::Gui::AddParameter(this->bursts.enabled);
+					ofxPreset::Gui::AddParameter(this->bursts.resolution);
+					ofxPreset::Gui::AddParameter(this->bursts.color);
+					ofxPreset::Gui::AddParameter(this->bursts.maxAge);
+					ofxPreset::Gui::AddParameter(this->bursts.forceMultiplier);
+					ofxPreset::Gui::AddParameter(this->bursts.forceRandom);
+					ofxPreset::Gui::AddParameter(this->bursts.worldBounds);
+					ofxPreset::Gui::AddRange("Distance", this->bursts.minDistance, this->bursts.maxDistance);
+					ofxPreset::Gui::AddParameter(this->bursts.maxLinks);
+
+					ofxPreset::Gui::EndTree(settings);
+				}
+
+				ofxPreset::Gui::EndTree(settings);
+			}
+		}
+
+		//--------------------------------------------------------------
+		const ofxTexture & PoolGL3D::getTexture() const
+		{
+			return this->textures[this->prevIdx];
 		}
 	}
 }

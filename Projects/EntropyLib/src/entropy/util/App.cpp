@@ -35,7 +35,7 @@ namespace entropy
 
 			ofAddListener(this->canvas[render::Layout::Back]->resizeEvent, this, &App_::onCanvasBackResized);
 			ofAddListener(this->canvas[render::Layout::Front]->resizeEvent, this, &App_::onCanvasFrontResized);
-			ofAddListener(ofEvents().windowResized, this, &App_::onWindowResized);
+			//ofAddListener(ofEvents().windowResized, this, &App_::onWindowResized);
 
 			// Set base parameter listeners.
 			this->parameterListeners.push_back(parameters.controlScreen.preview.scale.newListener([this](float & value)
@@ -67,7 +67,7 @@ namespace entropy
 
 			ofRemoveListener(this->canvas[render::Layout::Back]->resizeEvent, this, &App_::onCanvasBackResized);
 			ofRemoveListener(this->canvas[render::Layout::Front]->resizeEvent, this, &App_::onCanvasFrontResized);
-			ofRemoveListener(ofEvents().windowResized, this, &App_::onWindowResized);
+			//ofRemoveListener(ofEvents().windowResized, this, &App_::onWindowResized);
 
 			this->imGui.close();
 
@@ -327,7 +327,7 @@ namespace entropy
 
 				ofxPreset::Gui::AddParameter(this->parameters.background);
 
-				if (ImGui::CollapsingHeader(this->parameters.controlScreen.getName().c_str(), nullptr, true, true))
+				if (ofxPreset::Gui::BeginTree(this->parameters.controlScreen, settings))
 				{
 					if (ofxPreset::Gui::AddParameter(this->parameters.controlScreen.enabled))
 					{
@@ -335,24 +335,25 @@ namespace entropy
 					}
 					ofxPreset::Gui::AddStepper(this->parameters.controlScreen.screenWidth);
 					ofxPreset::Gui::AddStepper(this->parameters.controlScreen.screenHeight);
-					if (ImGui::Button(ofxPreset::Gui::GetUniqueName("Apply")))
+					if (ImGui::Button("Apply"))
 					{
 						this->applyConfiguration();
 					}
 
-					ImGui::SetNextTreeNodeOpen(true);
-					if (ImGui::TreeNode(this->parameters.controlScreen.preview.getName().c_str()))
+					if (ofxPreset::Gui::BeginTree(this->parameters.controlScreen.preview, settings))
 					{
 						ofxPreset::Gui::AddParameter(this->parameters.controlScreen.preview.backEnabled);
 						ImGui::SameLine();
 						ofxPreset::Gui::AddParameter(this->parameters.controlScreen.preview.frontEnabled);
 						ofxPreset::Gui::AddParameter(this->parameters.controlScreen.preview.scale);
 
-						ImGui::TreePop();
+						ofxPreset::Gui::EndTree(settings);
 					}
+
+					ofxPreset::Gui::EndTree(settings);
 				}
 
-				if (ImGui::CollapsingHeader(this->parameters.backScreen.getName().c_str(), nullptr, true, true))
+				if (ofxPreset::Gui::BeginTree(this->parameters.backScreen, settings))
 				{
 					if (ofxPreset::Gui::AddParameter(this->parameters.backScreen.enabled))
 					{
@@ -362,13 +363,15 @@ namespace entropy
 					ofxPreset::Gui::AddStepper(this->parameters.backScreen.screenHeight);
 					ofxPreset::Gui::AddStepper(this->parameters.backScreen.numRows);
 					ofxPreset::Gui::AddStepper(this->parameters.backScreen.numCols);
-					if (ImGui::Button(ofxPreset::Gui::GetUniqueName("Apply")))
+					if (ImGui::Button("Apply"))
 					{
 						this->applyConfiguration();
 					}
+
+					ofxPreset::Gui::EndTree(settings);
 				}
 
-				if (ImGui::CollapsingHeader(this->parameters.frontScreen.getName().c_str(), nullptr, true, true))
+				if (ofxPreset::Gui::BeginTree(this->parameters.frontScreen, settings))
 				{
 					if (ofxPreset::Gui::AddParameter(this->parameters.frontScreen.enabled))
 					{
@@ -378,10 +381,12 @@ namespace entropy
 					ofxPreset::Gui::AddStepper(this->parameters.frontScreen.screenHeight);
 					ofxPreset::Gui::AddStepper(this->parameters.frontScreen.numRows);
 					ofxPreset::Gui::AddStepper(this->parameters.frontScreen.numCols);
-					if (ImGui::Button(ofxPreset::Gui::GetUniqueName("Apply")))
+					if (ImGui::Button("Apply"))
 					{
 						this->applyConfiguration();
 					}
+
+					ofxPreset::Gui::EndTree(settings);
 				}
 			}
 			ofxPreset::Gui::EndWindow(this->guiSettings);
@@ -416,8 +421,8 @@ namespace entropy
 
 			// Force call the callback, in case the actual application window doesn't resize.
 			// This happens if there aren't enough screens connected to span the whole thing.
-			auto dummyArgs = ofResizeEventArgs();
-			this->onWindowResized(dummyArgs);
+			auto resizeArgs = ofResizeEventArgs(totalBounds.width, totalBounds.height);
+			this->onWindowResized(resizeArgs);
 		}
 
 		//--------------------------------------------------------------

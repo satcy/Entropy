@@ -39,19 +39,17 @@ namespace entropy
 			void resizeFront(ofResizeEventArgs & args) override;
 
 			void update(double dt) override;
+			void timelineBangFired(ofxTLBangEventArgs & args) override;
 
+			void drawBackBase() override;
 			void drawBackWorld() override;
-			void drawBackOverlay() override;
 
+			void drawFrontBase() override;
 			void drawFrontWorld() override;
-			void drawFrontOverlay() override;
 
 			void gui(ofxPreset::Gui::Settings & settings) override;
 
 		protected:
-			void drawPool2D();
-			void drawPool3D();
-
 #ifdef COMPUTE_GL_2D
 			entropy::bubbles::PoolGL2D pool2D;
 #endif
@@ -67,6 +65,7 @@ namespace entropy
 
 			geom::Sphere sphereGeom;
 			ofTexture sphereTexture;
+			ofShader sphereShader;
 
 			ofParameterGroup & getParameters() override
 			{
@@ -75,9 +74,15 @@ namespace entropy
 
 			struct : ofParameterGroup
 			{
-				ofParameter<ofFloatColor> tintColor{ "Tint Color", ofFloatColor::white };
+				struct : ofParameterGroup
+				{
+					ofParameter<float> orientation{ "Orientation", 0.0f, 0.0f, 360.0f };
+					ofParameter<float> maskMix{ "Mask Mix", 1.0f, 0.0f, 1.0f };
+
+					PARAM_DECLARE("SphereExtra", orientation, maskMix);
+				} sphere;
 				
-				PARAM_DECLARE("Bubbles", tintColor);
+				PARAM_DECLARE("Bubbles", sphere);
 			} parameters;
 		};
 	}

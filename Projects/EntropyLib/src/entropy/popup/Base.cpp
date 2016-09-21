@@ -199,14 +199,15 @@ namespace entropy
 
 			ofPushStyle();
 			{
-				if (parameters.base.background->a > 0)
-				{
-					ofSetColor(parameters.base.background.get());
-					ofDrawRectangle(this->viewport);
-				}
-		
 				if (this->isLoaded() && (this->enabled || this->editing))
 				{
+					// Draw the background.
+					if (parameters.base.background->a > 0)
+					{
+						ofSetColor(parameters.base.background.get());
+						ofDrawRectangle(this->dstBounds);
+					}
+
 					// Draw the border.
 					if (parameters.border.width > 0.0f)
 					{
@@ -314,25 +315,27 @@ namespace entropy
 			}
 			
 			// Add Page if it doesn't already exist.
-			if (!this->timeline->hasPage(kPopUpsTimelinePageName))
+			if (!this->timeline->hasPage(PopUpsTimelinePageName))
 			{
-				this->timeline->addPage(kPopUpsTimelinePageName);
+				this->timeline->addPage(PopUpsTimelinePageName);
 			}
-			auto page = this->timeline->getPage(kPopUpsTimelinePageName);
+			auto page = this->timeline->getPage(PopUpsTimelinePageName);
 
-			auto trackName = "_" + ofToString(this->index);
+			std:ostringstream oss;
+			oss << "Pop-up_" << this->index << "_";
 			if (this->type == Type::Image)
 			{
-				trackName.insert(0, "Image");
+				oss << "Image";
 			}
 			else if (this->type == Type::Video)
 			{
-				trackName.insert(0, "Video");
+				oss << "Video";
 			}
 			else if (this->type == Type::Sound)
 			{
-				trackName.insert(0, "Sound");
+				oss << "Sound";
 			}
+			auto trackName = oss.str();
 
 			if (page->getTrack(trackName))
 			{
@@ -340,7 +343,7 @@ namespace entropy
 				return;
 			}
 
-			this->timeline->setCurrentPage(kPopUpsTimelinePageName);
+			this->timeline->setCurrentPage(PopUpsTimelinePageName);
 
 			// Add Track.
 			this->switchesTrack = this->timeline->addSwitches(trackName);

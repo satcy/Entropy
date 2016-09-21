@@ -21,19 +21,16 @@ namespace entropy
 		void Bubbles::init()
 		{
 			// Init the pools.
-			this->parameters.add(this->pool2D.parameters);
-			this->parameters.add(this->pool3D.parameters);
-
 			this->pool2D.setDimensions(glm::vec2(GetCanvasWidth(render::Layout::Front), GetCanvasHeight(render::Layout::Front)));
 			this->pool2D.setup();
 
-			this->pool3D.setDimensions(glm::vec3(128.0f));
+			this->pool3D.setDimensions(glm::vec3(256.0f));
 			this->pool3D.setup();
 
 			// Init the sphere.
 			this->parameters.add(this->sphereGeom.parameters);
 
-			const auto filePath = this->getAssetsPath("images/Planck-Bubbles-SMICA.tif");
+			const auto filePath = this->getAssetsPath("images/Planck-CMB-SMICA.tif");
 			//const auto filePath = this->getAssetsPath("images/Gaia_star_density_image_log.png");
 			ofPixels pixels;
 			ofLoadImage(pixels, filePath);
@@ -49,6 +46,13 @@ namespace entropy
 				this->sphereTexture.loadData(pixels);
 			}
 			if (wasUsingArbTex) ofEnableArbTex();
+
+			//this->sphereShader.load("shaders/passthru.vert", "shaders/reveal.frag");
+			this->sphereShader.load("shaders/reveal.vert", "shaders/reveal.frag");
+
+			// Init the parameters.
+			this->parameters.add(this->pool2D.parameters);
+			this->parameters.add(this->pool3D.parameters);
 		}
 
 		//--------------------------------------------------------------
@@ -67,29 +71,67 @@ namespace entropy
 		//--------------------------------------------------------------
 		void Bubbles::update(double dt)
 		{
-			this->pool2D.update();
-			this->pool3D.update();
+			this->pool2D.update(dt);
+			this->pool3D.update(dt);
+		}
+
+		//--------------------------------------------------------------
+		void Bubbles::timelineBangFired(ofxTLBangEventArgs & args)
+		{
+			static const string kResetFlag = "reset";
+			if (args.flag.compare(0, kResetFlag.size(), kResetFlag) == 0)
+			{
+				this->getCamera(render::Layout::Back)->reset(false);
+				this->getCamera(render::Layout::Front)->reset(false);
+
+				this->pool2D.resetSimulation = true;
+				this->pool3D.resetSimulation = true;
+
+				this->timeline->stop();
+			}
+		}
+
+		//--------------------------------------------------------------
+		void Bubbles::drawBackBase()
+		{
+			if (this->pool2D.drawBack)
+			{
+				this->pool2D.draw();
+			}
 		}
 		
 		//--------------------------------------------------------------
 		void Bubbles::drawBackWorld()
 		{
+			ofPushMatrix();
+			{
+				ofRotateYDeg(this->parameters.sphere.orientation);
+
+				this->sphereShader.begin();
+				{
+					this->sphereShader.setUniformTexture("uTexColor", this->sphereTexture, 1);
+					this->sphereShader.setUniformTexture("uTexMask", this->pool3D.getTexture().texData.textureTarget, this->pool3D.getTexture().texData.textureID, 2);
+					this->sphereShader.setUniform3f("uMaskDims", this->pool3D.getDimensions());
+					this->sphereShader.setUniform1f("uVolSize", this->pool3D.volumeSize);
+					this->sphereShader.setUniform1f("uAlphaBase", this->sphereGeom.alpha);
+					this->sphereShader.setUniform1f("uMaskMix", this->parameters.sphere.maskMix);
+
+					this->sphereGeom.draw();
+				}
+				this->sphereShader.end();
+			}
+			ofPopMatrix();
+
 			if (this->pool3D.drawBack)
 			{
-				this->drawPool3D();
+				this->pool3D.draw();
 			}
-
-			this->sphereTexture.bind();
-			{
-				this->sphereGeom.draw();
-			}
-			this->sphereTexture.unbind();
 		}
 
 		//--------------------------------------------------------------
-		void Bubbles::drawBackOverlay()
+		void Bubbles::drawFrontBase()
 		{
-			if (this->pool2D.drawBack)
+			if (this->pool2D.drawFront)
 			{
 				this->pool2D.draw();
 			}
@@ -100,41 +142,8 @@ namespace entropy
 		{
 			if (this->pool3D.drawFront)
 			{
-				this->drawPool3D();
-			}
-		}
-
-		//--------------------------------------------------------------
-		void Bubbles::drawFrontOverlay()
-		{
-			if (this->pool2D.drawFront)
-			{
-				this->pool2D.draw();
-			}
-		}
-
-		//--------------------------------------------------------------
-		void Bubbles::drawPool2D()
-		{
-			ofPushStyle();
-			{
-				ofSetColor(this->parameters.tintColor.get());
-
-				this->pool2D.draw();
-			}
-			ofPopStyle();
-		}
-
-		//--------------------------------------------------------------
-		void Bubbles::drawPool3D()
-		{
-			ofPushStyle();
-			{
-				ofSetColor(this->parameters.tintColor.get());
-
 				this->pool3D.draw();
 			}
-			ofPopStyle();
 		}
 
 		//--------------------------------------------------------------
@@ -143,65 +152,8 @@ namespace entropy
 			ofxPreset::Gui::SetNextWindow(settings);
 			if (ofxPreset::Gui::BeginWindow(this->parameters.getName().c_str(), settings, true, nullptr))
 			{
-				ofxPreset::Gui::AddParameter(this->parameters.tintColor);
-
-#if defined(COMPUTE_GL_2D)
-				if (ofxPreset::Gui::BeginTree(this->pool2D.parameters, settings))
-				{
-					ofxPreset::Gui::AddParameter(this->pool2D.runSimulation);
-					if (ImGui::Button("Reset Simulation"))
-					{
-						this->pool2D.resetSimulation = true;
-					}
-
-					ofxPreset::Gui::AddParameter(this->pool2D.drawBack);
-					ImGui::SameLine();
-					ofxPreset::Gui::AddParameter(this->pool2D.drawFront);
-
-					ofxPreset::Gui::AddParameter(this->pool2D.dropColor);
-					ofxPreset::Gui::AddParameter(this->pool2D.dropping);
-					ofxPreset::Gui::AddParameter(this->pool2D.dropRate);
-
-					ofxPreset::Gui::AddParameter(this->pool2D.rippleRate);
-
-					ofxPreset::Gui::AddParameter(this->pool2D.damping);
-					ofxPreset::Gui::AddParameter(this->pool2D.radius);
-					ofxPreset::Gui::AddParameter(this->pool2D.ringSize);
-
-					ofxPreset::Gui::EndTree(settings);
-				}
-#endif
-
-#if defined(COMPUTE_GL_3D)
-				if (ofxPreset::Gui::BeginTree(this->pool3D.parameters, settings))
-				{
-					ofxPreset::Gui::AddParameter(this->pool3D.runSimulation);
-					if (ImGui::Button("Reset Simulation"))
-					{
-						this->pool3D.resetSimulation = true;
-					}
-
-					ofxPreset::Gui::AddParameter(this->pool3D.drawBack);
-					ImGui::SameLine();
-					ofxPreset::Gui::AddParameter(this->pool3D.drawFront);
-
-					ofxPreset::Gui::AddParameter(this->pool3D.dropColor);
-					ofxPreset::Gui::AddParameter(this->pool3D.dropping);
-					ofxPreset::Gui::AddParameter(this->pool3D.dropRate);
-
-					ofxPreset::Gui::AddParameter(this->pool3D.rippleRate);
-
-					ofxPreset::Gui::AddParameter(this->pool3D.damping);
-					ofxPreset::Gui::AddParameter(this->pool3D.radius);
-					ofxPreset::Gui::AddParameter(this->pool3D.ringSize);
-
-					static const vector<string> labels{ "Nearest", "Linear" };
-					ofxPreset::Gui::AddRadio(this->pool3D.filterMode, labels, 2);
-					ofxPreset::Gui::AddParameter(this->pool3D.volumeSize);
-
-					ofxPreset::Gui::EndTree(settings);
-				}
-#endif
+				this->pool2D.gui(settings);
+				this->pool3D.gui(settings);
 
 				if (ofxPreset::Gui::BeginTree(this->sphereGeom.parameters, settings))
 				{
@@ -211,14 +163,18 @@ namespace entropy
 						ImGui::SameLine();
 						ofxPreset::Gui::AddParameter(this->sphereGeom.autoDraw);
 					}
+					ofxPreset::Gui::AddParameter(this->sphereGeom.alphaBlend);
+					ofxPreset::Gui::AddParameter(this->sphereGeom.depthTest);
 					static const vector<string> labels{ "None", "Back", "Front" };
 					ofxPreset::Gui::AddRadio(this->sphereGeom.cullFace, labels, 3);
 					ofxPreset::Gui::AddParameter(this->sphereGeom.color);
 					ofxPreset::Gui::AddParameter(this->sphereGeom.alpha);
+					ofxPreset::Gui::AddParameter(this->parameters.sphere.maskMix);
 					ofxPreset::Gui::AddParameter(this->sphereGeom.radius);
 					ofxPreset::Gui::AddParameter(this->sphereGeom.resolution);
 					ofxPreset::Gui::AddParameter(this->sphereGeom.arcHorz);
 					ofxPreset::Gui::AddParameter(this->sphereGeom.arcVert);
+					ofxPreset::Gui::AddParameter(this->parameters.sphere.orientation);
 
 					ofxPreset::Gui::EndTree(settings);
 				}

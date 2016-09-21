@@ -163,6 +163,11 @@ namespace entropy
 				{
 					this->nextPreset = preset;
 				});
+				this->presetSavedListener = this->currentScene->presetSavedEvent.newListener([this](string & preset)
+				{
+					this->cameraSettings[render::Layout::Back] = this->currentScene->getCamera(render::Layout::Back)->fetchSettings();
+					this->cameraSettings[render::Layout::Front] = this->currentScene->getCamera(render::Layout::Front)->fetchSettings();
+				});
 
 				for (auto & it : this->cameraControlAreas)
 				{
@@ -185,6 +190,7 @@ namespace entropy
 			this->currentScene.reset();
 
 			this->presetCuedListener.unsubscribe();
+			this->presetSavedListener.unsubscribe();
 			this->nextPreset.clear();
 		}
 
@@ -386,7 +392,7 @@ namespace entropy
 						}
 					}
 
-					if (ImGui::CollapsingHeader("Tracks", nullptr, true, true))
+					if (ofxPreset::Gui::BeginTree("Tracks", settings))
 					{
 						for (int i = 0; i < this->tracks.size(); ++i)
 						{
@@ -426,6 +432,8 @@ namespace entropy
 							ImGui::PopItemWidth();
 							ImGui::PopID();
 						}
+
+						ofxPreset::Gui::EndTree(settings);
 					}
 				}
 				ofxPreset::Gui::EndWindow(settings);
@@ -436,7 +444,8 @@ namespace entropy
 				if (this->scenes.size() > 1)
 				{
 					// Move to the next column for the Scene specific gui windows.
-					settings.windowPos = glm::vec2(settings.totalBounds.getMaxX() + kGuiMargin, 0.0f);
+					//settings.windowPos = glm::vec2(settings.totalBounds.x + kGuiMargin, 0.0f);
+					settings.windowPos = glm::vec2(400.0f + kGuiMargin, 0.0f);
 					settings.windowSize = glm::vec2(0.0f);
 				}
 
@@ -509,6 +518,12 @@ namespace entropy
 			{
 				this->currentScene->setCameraControlArea(layout, controlArea);
 			}
+		}
+
+		//--------------------------------------------------------------
+		const world::Camera::Settings & Playlist::getCameraSettings(render::Layout layout)
+		{
+			return this->cameraSettings[layout];
 		}
 
 		//--------------------------------------------------------------

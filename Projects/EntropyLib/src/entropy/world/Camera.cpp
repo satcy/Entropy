@@ -7,6 +7,13 @@ namespace entropy
 	namespace world
 	{
 		//--------------------------------------------------------------
+		Camera::Settings::Settings()
+			: fov(0.0f)
+			, nearClip(0.0f)
+			, farClip(0.0f)
+		{}
+
+		//--------------------------------------------------------------
 		Camera::Camera()
 			: cameraTrack(nullptr)
 		{
@@ -75,11 +82,13 @@ namespace entropy
 		}
 
 		//--------------------------------------------------------------
-		void Camera::reset()
+		void Camera::reset(bool transform)
 		{
 			this->easyCam.setAspectRatio(GetCanvasWidth(this->layout) / GetCanvasHeight(this->layout));
-			this->easyCam.reset();
-
+			if (transform)
+			{
+				this->easyCam.reset();
+			}
 			this->tumbleOffset = glm::vec3(0.0f);
 			this->dollyOffset = 0.0f;
 		}
@@ -136,6 +145,40 @@ namespace entropy
 			ofPopMatrix();
 
 			this->easyCam.end();
+		}
+
+		//--------------------------------------------------------------
+		void Camera::applySettings(const Camera::Settings & settings)
+		{
+			this->fov = settings.fov;
+			this->nearClip = settings.nearClip;
+			this->farClip = settings.farClip;
+			this->easyCam.setPosition(settings.position);
+			this->easyCam.setOrientation(settings.orientation);
+
+			if (this->hasTimelineTrack())
+			{
+				// Find the first keyframe and force its transform.
+				auto & keyframes = this->cameraTrack->getKeyframes();
+				if (!keyframes.empty())
+				{
+					auto keyframe = static_cast<ofxTLCameraFrame *>(keyframes.front());
+					keyframe->position = this->easyCam.getPosition();
+					keyframe->orientation = this->easyCam.getOrientationQuat();
+				}
+			}
+		}
+		
+		//--------------------------------------------------------------
+		Camera::Settings Camera::fetchSettings()
+		{
+			auto settings = Camera::Settings();
+			settings.fov = this->fov;
+			settings.nearClip = this->nearClip;
+			settings.farClip = this->farClip;
+			settings.position = this->easyCam.getPosition();
+			settings.orientation = this->easyCam.getOrientationQuat();
+			return settings;
 		}
 
 		//--------------------------------------------------------------
@@ -272,11 +315,11 @@ namespace entropy
 			}
 
 			// Add Page if it doesn't already exist.
-			if (!this->timeline->hasPage(kCamerasTimelinePageName))
+			if (!this->timeline->hasPage(CameraTimelinePageName))
 			{
-				this->timeline->addPage(kCamerasTimelinePageName);
+				this->timeline->addPage(CameraTimelinePageName);
 			}
-			this->timeline->setCurrentPage(kCamerasTimelinePageName);
+			this->timeline->setCurrentPage(CameraTimelinePageName);
 
 			const auto trackName = this->parameters.getName();
 
@@ -349,7 +392,9 @@ namespace entropy
 		bool Camera::gui(ofxPreset::Gui::Settings & settings)
 		{
 			if (ofxPreset::Gui::BeginTree(this->parameters, settings))
-			{
+			{				
+				ofxPreset::Gui::AddParameter(this->inheritsSettings);
+
 				ofxPreset::Gui::AddParameter(this->fov);
 				ofxPreset::Gui::AddRange("Clipping", this->nearClip, this->farClip);
 				
@@ -365,7 +410,7 @@ namespace entropy
 				
 				if (ImGui::Button("Reset"))
 				{
-					this->reset();
+					this->reset(true);
 				}
 				ImGui::SameLine();
 				if (ImGui::Button("Set to Origin"))

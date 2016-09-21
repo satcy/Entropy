@@ -378,7 +378,7 @@ namespace entropy
 					this->loadSettings();
 				}
 				
-				if (ImGui::CollapsingHeader("Render", nullptr, true, true))
+				if (ofxPreset::Gui::BeginTree("Render", settings))
 				{
 					if (ImGui::Checkbox("Export", &this->exportFrames))
 					{
@@ -416,9 +416,11 @@ namespace entropy
 							this->exportFrames = false;
 						}
 					}
+
+					ofxPreset::Gui::EndTree(settings);
 				}
 				
-				if (ImGui::CollapsingHeader("Warping", nullptr, true, true))
+				if (ofxPreset::Gui::BeginTree("Warping", settings))
 				{
 					ofxPreset::Gui::AddParameter(this->parameters.fillWindow);
 
@@ -477,13 +479,16 @@ namespace entropy
 							}
 						}
 					}
+
+					ofxPreset::Gui::EndTree(settings);
 				}
 			}
 			ofxPreset::Gui::EndWindow(settings);
 
 			// Move to the next column for the Warp gui windows.
 			auto warpSettings = ofxPreset::Gui::Settings();
-			warpSettings.windowPos = glm::vec2(settings.totalBounds.getMaxX() + kGuiMargin, 0.0f);
+			//warpSettings.windowPos = glm::vec2(settings.totalBounds.getMaxX() + kGuiMargin, 0.0f);
+			warpSettings.windowPos = glm::vec2(800.0f + kGuiMargin, 0.0f);
 			for (auto i = 0; i < this->warps.size(); ++i)
 			{
 				if (this->openGuis[i])
@@ -603,7 +608,7 @@ namespace entropy
 
 						if (this->warps.size() > 1)
 						{
-							if (ImGui::CollapsingHeader(paramGroup.blend.getName().c_str(), nullptr, true, true))
+							if (ofxPreset::Gui::BeginTree(paramGroup.blend, settings))
 							{
 								auto tmpLuminanceRef = paramGroup.blend.luminance.get();
 								if (ImGui::ColorEdit3(paramGroup.blend.luminance.getName().c_str(), glm::value_ptr(tmpLuminanceRef)))
@@ -665,6 +670,8 @@ namespace entropy
 										this->dirtyStitches = true;
 									}
 								}
+
+								ofxPreset::Gui::EndTree(settings);
 							}
 						}
 					}

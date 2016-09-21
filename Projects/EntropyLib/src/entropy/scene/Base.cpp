@@ -42,6 +42,7 @@ namespace entropy
 				timelineDataPath.append(ofFilePath::addTrailingSlash("ofxTimeline"));
 			}
 			this->timeline = std::make_shared<ofxTimeline>();
+			this->timeline->setName("timeline");
 			this->timeline->setup(timelineDataPath);
 			this->timeline->setSpacebarTogglePlay(false);
 			this->timeline->setLoopType(OF_LOOP_NONE);
@@ -69,8 +70,8 @@ namespace entropy
 			// Configure and register parameters.
 			this->populateMappings(parameters);
 
-			this->populateMappings(this->cameras[render::Layout::Back]->parameters);
-			this->populateMappings(this->cameras[render::Layout::Front]->parameters);
+			this->populateMappings(this->cameras[render::Layout::Back]->parameters, world::CameraTimelinePageName);
+			this->populateMappings(this->cameras[render::Layout::Front]->parameters, world::CameraTimelinePageName);
 
 			this->boxes[render::Layout::Back].parameters.setName("Box Back");
 			this->boxes[render::Layout::Front].parameters.setName("Box Front");
@@ -79,8 +80,8 @@ namespace entropy
 
 			this->postEffects[render::Layout::Back].setName("Post Effects Back");
 			this->postEffects[render::Layout::Front].setName("Post Effects Front");
-			this->populateMappings(this->postEffects[render::Layout::Back]);
-			this->populateMappings(this->postEffects[render::Layout::Front]);
+			this->populateMappings(this->postEffects[render::Layout::Back], render::PostEffectsTimelinePageName);
+			this->populateMappings(this->postEffects[render::Layout::Front], render::PostEffectsTimelinePageName);
 
 			// List presets.
 			this->populatePresets();
@@ -134,6 +135,25 @@ namespace entropy
 
 			// Reset the timeline.
 			this->timeline->setCurrentFrame(0);
+
+			// Reset cameras (but keep transform intact).
+			for (auto & it : this->cameras)
+			{
+				it.second->reset(false);
+			}
+
+			// Inherit the camera settings if necessary.
+			for (auto & it : this->cameras)
+			{
+				if (it.second->inheritsSettings)
+				{
+					const auto & cameraSettings = GetSavedCameraSettings(it.first);
+					if (cameraSettings.fov != 0.0f)
+					{
+						it.second->applySettings(cameraSettings);
+					}
+				}
+			}
 
 			// Setup child Scene.
 			this->setup();
@@ -368,7 +388,8 @@ namespace entropy
 			// Add individual gui windows for each Pop-up.
 			{
 				auto popUpSettings = ofxPreset::Gui::Settings();
-				popUpSettings.windowPos.x = (settings.windowSize.x + kGuiMargin) * 2.0f;
+				//popUpSettings.windowPos.x = (settings.totalBounds.getMaxX() + kGuiMargin);
+				popUpSettings.windowPos.x = (800.0f + kGuiMargin);
 				popUpSettings.windowPos.y = 0.0f;
 				for (auto i = 0; i < this->popUps.size(); ++i)
 				{
@@ -633,6 +654,7 @@ namespace entropy
 		void Base::setShowtime()
 		{
 			this->timeline->setCurrentTimeToInPoint();
+			this->timeline->setCurrentPage(0);
 			this->setCameraLocked(true);
 			this->timeline->play();
 		}
@@ -800,12 +822,6 @@ namespace entropy
 			// Clean up scene.
 			this->exit_();
 
-			// Reset cameras.
-			for (auto & it : this->cameras)
-			{
-				it.second->reset();
-			}
-
 			// Make sure file exists.
 			const auto presetPath = this->getPresetPath(presetName);
 			auto presetFile = ofFile(presetPath);
@@ -861,6 +877,11 @@ namespace entropy
 
 			this->timeline->saveTracksToFolder(presetPath);
 
+			// Notify listeners.
+			// TODO: This parameter should be presetName but it's volatile
+			// and I'm not using it so whatever...
+			this->presetSavedEvent.notify(this->currPreset);
+
 			this->populatePresets();
 
 			return true;
@@ -885,7 +906,7 @@ namespace entropy
 		}
 
 		//--------------------------------------------------------------
-		void Base::populateMappings(const ofParameterGroup & group)
+		void Base::populateMappings(const ofParameterGroup & group, const std::string & timelinePageName)
 		{
 			for (const auto & parameter : group)
 			{
@@ -904,7 +925,7 @@ namespace entropy
 					if (parameterFloat)
 					{
 						auto mapping = make_shared<util::Mapping<float, ofxTLCurves>>();
-						mapping->setup(parameterFloat);
+						mapping->setup(parameterFloat, timelinePageName);
 						this->mappings[mapping->getGroupName()].push_back(mapping);
 						continue;
 					}
@@ -913,7 +934,7 @@ namespace entropy
 					if (parameterInt)
 					{
 						auto mapping = make_shared<util::Mapping<int, ofxTLCurves>>();
-						mapping->setup(parameterInt);
+						mapping->setup(parameterInt, timelinePageName);
 						this->mappings[mapping->getGroupName()].push_back(mapping);
 						continue;
 					}
@@ -922,7 +943,7 @@ namespace entropy
 					if (parameterBool)
 					{
 						auto mapping = make_shared<util::Mapping<bool, ofxTLSwitches>>();
-						mapping->setup(parameterBool);
+						mapping->setup(parameterBool, timelinePageName);
 						this->mappings[mapping->getGroupName()].push_back(mapping);
 						continue;
 					}
@@ -931,7 +952,7 @@ namespace entropy
 					if (parameterColor)
 					{
 						auto mapping = make_shared<util::Mapping<ofFloatColor, ofxTLColorTrack>>();
-						mapping->setup(parameterColor);
+						mapping->setup(parameterColor, timelinePageName);
 						this->mappings[mapping->getGroupName()].push_back(mapping);
 						continue;
 					}

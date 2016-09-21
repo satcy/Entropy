@@ -24,7 +24,7 @@ namespace entropy
 		//--------------------------------------------------------------
 		void Image::gui(ofxPreset::Gui::Settings & settings)
 		{
-			if (ImGui::CollapsingHeader("File", nullptr, true, true))
+			if (ofxPreset::Gui::BeginTree("File", settings))
 			{
 				if (ImGui::Button("Load..."))
 				{
@@ -47,6 +47,8 @@ namespace entropy
 					}
 				}
 				ImGui::Text("Filename: %s", this->fileName.c_str());
+
+				ofxPreset::Gui::EndTree(settings);
 			}
 		}
 
@@ -117,8 +119,7 @@ namespace entropy
 		//--------------------------------------------------------------
 		void Image::renderContent()
 		{
-			this->image.drawSubsection(this->dstBounds.x, this->dstBounds.y, this->dstBounds.width, this->dstBounds.height,
-									   this->srcBounds.x, this->srcBounds.y, this->srcBounds.width, this->srcBounds.height);
+			this->image.drawSubsection(this->dstBounds, this->srcBounds);
 		}
 	}
 }
