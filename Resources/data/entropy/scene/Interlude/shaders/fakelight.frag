@@ -1,6 +1,7 @@
 #version 450
-#define LIGHT_NUM 5
+#define LIGHT_NUM 20
 uniform vec3 fakelights[LIGHT_NUM];
+uniform float alpha;
 in vec4 t_position;
 out vec4 fragColor;
 void main(void) {
@@ -12,5 +13,5 @@ void main(void) {
 	
 	
 
-	fragColor = vec4(1.0, 1.0, 1.0, a);
+	fragColor = vec4(1.0, 1.0, 1.0, a*alpha);
 }

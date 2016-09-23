@@ -56,6 +56,17 @@ namespace entropy
 		//--------------------------------------------------------------
 		void Interlude::update(double dt)
 		{
+			part.setWind(ofVec3f(this->parameters.particles.wind_x, this->parameters.particles.wind_y, this->parameters.particles.wind_z));
+			part.noise.scale = this->parameters.particles.noise_scale;
+			part.noise.speed = this->parameters.particles.noise_speed;
+			part.line_params.max_len = this->parameters.particles.line_params_max_len;
+			part.line_params.step = this->parameters.particles.line_params_step;
+			part.point_alpha = this->parameters.particles.point_alpha;
+			part.box_line_alpha = this->parameters.particles.box_line_alpha;
+			if (this->parameters.particles.reset_particle) {
+				part.reset();
+				this->parameters.particles.reset_particle = false;
+			}
 			part.update();
 		}
 
@@ -142,6 +153,22 @@ namespace entropy
 					}
 
 					ofxPreset::Gui::EndTree(settings);
+
+					if (ofxPreset::Gui::BeginTree(this->parameters.particles, settings))
+					{
+						
+						ofxPreset::Gui::AddParameter(this->parameters.particles.reset_particle);
+						ofxPreset::Gui::AddParameter(this->parameters.particles.wind_x);
+						ofxPreset::Gui::AddParameter(this->parameters.particles.wind_y);
+						ofxPreset::Gui::AddParameter(this->parameters.particles.wind_z);
+						ofxPreset::Gui::AddParameter(this->parameters.particles.noise_scale);
+						ofxPreset::Gui::AddParameter(this->parameters.particles.noise_speed);
+						ofxPreset::Gui::AddParameter(this->parameters.particles.line_params_max_len);
+						ofxPreset::Gui::AddParameter(this->parameters.particles.line_params_step);
+						ofxPreset::Gui::AddParameter(this->parameters.particles.point_alpha);
+						ofxPreset::Gui::AddParameter(this->parameters.particles.box_line_alpha);
+						ofxPreset::Gui::EndTree(settings);
+					}
 				}
 			}
 			ofxPreset::Gui::EndWindow(settings);
@@ -180,6 +207,7 @@ namespace entropy
 					}
 				}
 			}
+
 
 			settings.totalBounds.growToInclude(stripesSettings.totalBounds);
 			settings.mouseOverGui |= stripesSettings.mouseOverGui;
