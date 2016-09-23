@@ -108,10 +108,47 @@ namespace entropy
 
 			if (!this->attachToParent && !this->easyCam.isMoving())
 			{
-				this->tumbleOffset.x += this->tiltSpeed;
-				this->tumbleOffset.y += this->panSpeed;
-				this->tumbleOffset.z += this->rollSpeed;
-				
+				if (this->tumbleOverride)
+				{
+					// Stop when we circle back to 0.
+					auto iTumbleOffset = glm::ivec3(static_cast<int>(this->tumbleOffset.x) % 360,
+													static_cast<int>(this->tumbleOffset.y) % 360, 
+													static_cast<int>(this->tumbleOffset.z) % 360);
+					auto iTumbleTarget = glm::ivec3(static_cast<int>(this->tumbleOffset.x + this->tiltSpeed) % 360,
+													static_cast<int>(this->tumbleOffset.y + this->panSpeed) % 360,
+													static_cast<int>(this->tumbleOffset.z + this->rollSpeed) % 360);
+					if (iTumbleOffset.x == 0 || iTumbleTarget.x < iTumbleOffset.x)
+					{
+						this->tumbleOffset.x = 0.0f;
+					}
+					else
+					{
+						this->tumbleOffset.x += this->tiltSpeed;
+					}
+					if (iTumbleOffset.y == 0 || iTumbleTarget.y < iTumbleOffset.y)
+					{
+						this->tumbleOffset.y = 0.0f;
+					}
+					else
+					{
+						this->tumbleOffset.y += this->panSpeed;
+					}
+					if (iTumbleOffset.z == 0 || iTumbleTarget.z < iTumbleOffset.z)
+					{
+						this->tumbleOffset.z = 0.0f;
+					}
+					else
+					{
+						this->tumbleOffset.z += this->rollSpeed;
+					}
+				}
+				else
+				{
+					this->tumbleOffset.x += this->tiltSpeed;
+					this->tumbleOffset.y += this->panSpeed;
+					this->tumbleOffset.z += this->rollSpeed;
+				}
+
 				this->dollyOffset += this->dollySpeed;
 			}
 		}
@@ -292,7 +329,9 @@ namespace entropy
 			{
 				this->setAttachedToParent(false);
 			}
-			this->easyCam.setTransformMatrix(this->parent->getEasyCam().getGlobalTransformMatrix());
+			this->easyCam.setPosition(this->parent->getEasyCam().getPosition());
+			this->easyCam.setOrientation(this->parent->getEasyCam().getOrientationQuat());
+			this->easyCam.setScale(this->parent->getEasyCam().getScale());
 			if (wasAttached)
 			{
 				this->setAttachedToParent(true);
@@ -310,7 +349,7 @@ namespace entropy
 
 			if (this->cameraTrack)
 			{
-				ofLogWarning(__FUNCTION__) << "Camera track already exists.";
+				//ofLogWarning(__FUNCTION__) << "Camera track already exists.";
 				return;
 			}
 
@@ -431,6 +470,7 @@ namespace entropy
 					ofxPreset::Gui::AddParameter(this->tiltSpeed);
 					ofxPreset::Gui::AddParameter(this->panSpeed);
 					ofxPreset::Gui::AddParameter(this->rollSpeed);
+					ofxPreset::Gui::AddParameter(this->tumbleOverride);
 					ofxPreset::Gui::AddParameter(this->dollySpeed);
 				}
 

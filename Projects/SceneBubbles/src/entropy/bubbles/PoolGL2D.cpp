@@ -15,10 +15,17 @@ namespace entropy
 		}
 		
 		//--------------------------------------------------------------
-		void PoolGL2D::setup()
+		void PoolGL2D::init()
 		{
-			PoolBase::setup();
+			PoolBase::init();
 
+			// Load the shader.
+			this->shader.load("shaders/passthru.vert", "shaders/ripple.frag");
+		}
+
+		//--------------------------------------------------------------
+		void PoolGL2D::resize()
+		{
 			// Allocate the textures and buffers.
 			for (int i = 0; i < 3; ++i) {
 				this->textures[i].setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
@@ -47,9 +54,6 @@ namespace entropy
 			this->mesh.addTexCoord(glm::vec2(this->dimensions.x, 0));
 			this->mesh.addTexCoord(glm::vec2(this->dimensions.x, this->dimensions.y));
 			this->mesh.addTexCoord(glm::vec2(0, this->dimensions.y));
-
-			// Load the shader.
-			this->shader.load("shaders/passthru.vert", "shaders/ripple.frag");
 		}
 
 		//--------------------------------------------------------------
@@ -126,6 +130,31 @@ namespace entropy
 		}
 
 		//--------------------------------------------------------------
+		void PoolGL2D::mixFrames(float pct)
+		{
+			this->fbos[this->currIdx].begin();
+			{
+				ofClear(0, 0);
+				//ofEnableAlphaBlending();
+
+				ofSetColor(255, 255 * (1.0f - pct));
+				this->textures[this->prevIdx].bind();
+				{
+					this->mesh.draw();
+				}
+				this->textures[this->prevIdx].unbind();
+
+				ofSetColor(255, 255 * pct);
+				this->textures[this->tempIdx].bind();
+				{
+					this->mesh.draw();
+				}
+				this->textures[this->tempIdx].unbind();
+			}
+			this->fbos[this->currIdx].end();
+		}
+
+		//--------------------------------------------------------------
 		void PoolGL2D::draw()
 		{
 			ofPushStyle();
@@ -133,7 +162,7 @@ namespace entropy
 				ofEnableAlphaBlending();
 				ofSetColor(255, this->alpha * 255);
 
-				this->textures[this->prevIdx].draw(0, 0);
+				this->getTexture().draw(0, 0);
 			}
 			ofPopStyle();
 		}

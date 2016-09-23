@@ -42,10 +42,6 @@
         path = addons/ofxRange
         url = https://github.com/Entropy/ofxRange
         branch = master
-[submodule "addons/ofxRenderToolkit"]
-        path = addons/ofxRenderToolkit
-        url = https://github.com/Entropy/ofxRenderToolkit.git
-        branch = master
 [submodule "addons/ofxTextInputField"]
         path = addons/ofxTextInputField
         url = https://github.com/Entropy/ofxTextInputField
@@ -61,10 +57,6 @@
 [submodule "addons/ofxVolumetrics"]
         path = addons/ofxVolumetrics
         url = https://github.com/Entropy/ofxVolumetrics
-        branch = master
-[submodule "addons/ofxWMFVideoPlayer"]
-        path = addons/ofxWMFVideoPlayer
-        url = https://github.com/Entropy/ofxWMFVideoPlayer
         branch = master
 [submodule "addons/ofxGStreamer"]
 	path = addons/ofxGStreamer

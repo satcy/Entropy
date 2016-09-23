@@ -22,9 +22,16 @@ namespace entropy
 			: public PoolBase
 		{
 		public:
+			enum class FilterMode
+			{
+				Linear,
+				Nearest
+			};
+
 			PoolGL3D();
 
-			void setup() override;
+			void init() override;
+			void resize() override;
 
 			void reset() override;
 			void update(double dt) override;
@@ -32,7 +39,7 @@ namespace entropy
 
 			void gui(ofxPreset::Gui::Settings & settings) override;
 
-			ofParameter<int> filterMode{ "Filter Mode", GL_LINEAR, GL_NEAREST, GL_LINEAR };
+			ofParameter<int> filterMode{ "Filter Mode", static_cast<int>(FilterMode::Linear), static_cast<int>(FilterMode::Nearest), static_cast<int>(FilterMode::Linear) };
 			ofParameter<float> volumeSize{ "Volume Size", 800.0f, 512.0f, 1920.0f };
 
 			const ofxTexture & getTexture() const;
@@ -41,14 +48,16 @@ namespace entropy
 			void addDrop() override;
 			void stepRipple() override;
 			void copyResult() override;
+			void mixFrames(float pct) override;
 
 			ofShader dropShader;
 			ofShader rippleShader;
+#if USE_COPY_SHADER
 			ofShader copyShader;
+#endif
+			ofShader mixShader;
 
 			ofVboMesh mesh;
-
-			ofBufferObject copyBuffer;
 
 #if USE_TEX_ARRAY
 			ofxTextureArray textures[3];
@@ -56,6 +65,7 @@ namespace entropy
 #else
 			ofxTexture3d textures[3];
 			ofxVolumetrics3D volumetrics;
+			ofShader volumetricsShader;
 #endif
 			ofxFbo fbos[3];
 

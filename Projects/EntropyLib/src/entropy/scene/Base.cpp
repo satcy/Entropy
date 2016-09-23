@@ -67,6 +67,13 @@ namespace entropy
 			// Initialize child class.
 			this->init();
 
+			// Force resize.
+			for (auto & it : this->cameras)
+			{
+				auto resizeArgs = ofResizeEventArgs(GetCanvasWidth(it.first), GetCanvasHeight(it.first));
+				this->resize_(it.first, resizeArgs);
+			}
+
 			// Configure and register parameters.
 			this->populateMappings(parameters);
 
@@ -129,7 +136,7 @@ namespace entropy
 		{
 			if (this->ready)
 			{
-				ofLogError(__FUNCTION__) << "Scene is already set up!";
+				//ofLogNotice(__FUNCTION__) << "Scene is already set up!";
 				return;
 			}
 
@@ -166,7 +173,7 @@ namespace entropy
 		{
 			if (!this->ready)
 			{
-				ofLogError(__FUNCTION__) << "Scene is not set up!";
+				//ofLogNotice(__FUNCTION__) << "Scene is not set up!";
 				return;
 			}
 
@@ -452,10 +459,11 @@ namespace entropy
 							ImGui::SameLine();
 							ofxPreset::Gui::AddParameter(it.second.autoDraw);
 						}
-						ofxPreset::Gui::AddParameter(it.second.alphaBlend);
+						static const vector<string> blendLabels{ "Disabled", "Alpha", "Add", "Subtract", "Multiply", "Screen" };
+						ofxPreset::Gui::AddRadio(it.second.blendMode, blendLabels, 3);
 						ofxPreset::Gui::AddParameter(it.second.depthTest);
-						static const vector<string> labels{ "None", "Back", "Front" };
-						ofxPreset::Gui::AddRadio(it.second.cullFace, labels, 3);
+						static const vector<string> cullLabels{ "None", "Back", "Front" };
+						ofxPreset::Gui::AddRadio(it.second.cullFace, cullLabels, 3);
 						ofxPreset::Gui::AddParameter(it.second.color);
 						ofxPreset::Gui::AddParameter(it.second.alpha);
 						ofxPreset::Gui::AddParameter(it.second.size);
@@ -656,7 +664,7 @@ namespace entropy
 			this->timeline->setCurrentTimeToInPoint();
 			this->timeline->setCurrentPage(0);
 			this->setCameraLocked(true);
-			this->timeline->play();
+			//this->timeline->play();
 		}
 
 		//--------------------------------------------------------------
@@ -903,6 +911,25 @@ namespace entropy
 					this->presets.push_back(presetsDir.getName(i));
 				}
 			}
+		}
+
+		//--------------------------------------------------------------
+		void Base::loadTextureImage(const std::string & filePath, ofTexture & texture)
+		{
+			ofPixels pixels;
+			ofLoadImage(pixels, filePath);
+			if (!pixels.isAllocated())
+			{
+				ofLogError(__FUNCTION__) << "Could not load file at path " << filePath;
+			}
+
+			bool wasUsingArbTex = ofGetUsingArbTex();
+			ofDisableArbTex();
+			{
+				texture.enableMipmap();
+				texture.loadData(pixels);
+			}
+			if (wasUsingArbTex) ofEnableArbTex();
 		}
 
 		//--------------------------------------------------------------

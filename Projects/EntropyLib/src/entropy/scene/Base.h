@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ofMain.h"
 #include "ofxPreset.h"
 #include "ofxTimeline.h"
 
@@ -144,6 +143,9 @@ namespace entropy
 			string dataPath;
 			string currPreset;
 			vector<string> presets;
+
+			// Helpers
+			void loadTextureImage(const std::string & filePath, ofTexture & texture);
 
 			// Parameters
 			virtual ofParameterGroup & getParameters() = 0;

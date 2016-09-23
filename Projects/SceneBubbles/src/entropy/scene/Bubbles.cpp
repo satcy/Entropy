@@ -22,33 +22,22 @@ namespace entropy
 		{
 			// Init the pools.
 			this->pool2D.setDimensions(glm::vec2(GetCanvasWidth(render::Layout::Front), GetCanvasHeight(render::Layout::Front)));
-			this->pool2D.setup();
+			this->pool2D.init();
 
 			this->pool3D.setDimensions(glm::vec3(256.0f));
-			this->pool3D.setup();
+			this->pool3D.init();
 
 			// Init the sphere.
 			this->parameters.add(this->sphereGeom.parameters);
 
-			const auto filePath = this->getAssetsPath("images/Planck-CMB-SMICA.tif");
-			//const auto filePath = this->getAssetsPath("images/Gaia_star_density_image_log.png");
-			ofPixels pixels;
-			ofLoadImage(pixels, filePath);
-			if (!pixels.isAllocated())
-			{
-				ofLogError(__FUNCTION__) << "Could not load file at path " << filePath;
-			}
+			this->loadTextureImage(this->getAssetsPath("images/Planck-CMB-SMICA.png"), this->sphereTexture);
 
-			bool wasUsingArbTex = ofGetUsingArbTex();
-			ofDisableArbTex();
-			{
-				this->sphereTexture.enableMipmap();
-				this->sphereTexture.loadData(pixels);
-			}
-			if (wasUsingArbTex) ofEnableArbTex();
-
-			//this->sphereShader.load("shaders/passthru.vert", "shaders/reveal.frag");
-			this->sphereShader.load("shaders/reveal.vert", "shaders/reveal.frag");
+			auto shaderSettings = ofShader::Settings();
+			shaderSettings.intDefines["USE_TEX_ARRAY"] = USE_TEX_ARRAY;
+			shaderSettings.bindDefaults = true;
+			shaderSettings.shaderFiles[GL_VERTEX_SHADER] = "shaders/reveal.vert";
+			shaderSettings.shaderFiles[GL_FRAGMENT_SHADER] = "shaders/reveal.frag";
+			this->sphereShader.setup(shaderSettings);
 
 			// Init the parameters.
 			this->parameters.add(this->pool2D.parameters);
@@ -103,24 +92,19 @@ namespace entropy
 		//--------------------------------------------------------------
 		void Bubbles::drawBackWorld()
 		{
-			ofPushMatrix();
+			this->sphereShader.begin();
 			{
-				ofRotateYDeg(this->parameters.sphere.orientation);
+				this->sphereShader.setUniformTexture("uTexColor", this->sphereTexture, 1);
+				this->sphereShader.setUniformTexture("uTexMask", this->pool3D.getTexture().texData.textureTarget, this->pool3D.getTexture().texData.textureID, 2);
+				this->sphereShader.setUniform3f("uMaskDims", this->pool3D.getDimensions());
+				this->sphereShader.setUniform1f("uVolSize", this->pool3D.volumeSize);
+				this->sphereShader.setUniform1f("uAlphaBase", this->sphereGeom.alpha);
+				this->sphereShader.setUniform1f("uMaskMix", this->parameters.sphere.maskMix);
+				this->sphereShader.setUniform4f("uTintColor", this->parameters.sphere.tintColor.get());
 
-				this->sphereShader.begin();
-				{
-					this->sphereShader.setUniformTexture("uTexColor", this->sphereTexture, 1);
-					this->sphereShader.setUniformTexture("uTexMask", this->pool3D.getTexture().texData.textureTarget, this->pool3D.getTexture().texData.textureID, 2);
-					this->sphereShader.setUniform3f("uMaskDims", this->pool3D.getDimensions());
-					this->sphereShader.setUniform1f("uVolSize", this->pool3D.volumeSize);
-					this->sphereShader.setUniform1f("uAlphaBase", this->sphereGeom.alpha);
-					this->sphereShader.setUniform1f("uMaskMix", this->parameters.sphere.maskMix);
-
-					this->sphereGeom.draw();
-				}
-				this->sphereShader.end();
+				this->sphereGeom.draw();
 			}
-			ofPopMatrix();
+			this->sphereShader.end();
 
 			if (this->pool3D.drawBack)
 			{
@@ -158,15 +142,12 @@ namespace entropy
 				if (ofxPreset::Gui::BeginTree(this->sphereGeom.parameters, settings))
 				{
 					ofxPreset::Gui::AddParameter(this->sphereGeom.enabled);
-					if (this->sphereGeom.enabled)
-					{
-						ImGui::SameLine();
-						ofxPreset::Gui::AddParameter(this->sphereGeom.autoDraw);
-					}
-					ofxPreset::Gui::AddParameter(this->sphereGeom.alphaBlend);
+					ofxPreset::Gui::AddParameter(this->parameters.sphere.tintColor, false);
+					static const vector<string> blendLabels{ "Disabled", "Alpha", "Add", "Subtract", "Multiply", "Screen" };
+					ofxPreset::Gui::AddRadio(this->sphereGeom.blendMode, blendLabels, 3);
 					ofxPreset::Gui::AddParameter(this->sphereGeom.depthTest);
-					static const vector<string> labels{ "None", "Back", "Front" };
-					ofxPreset::Gui::AddRadio(this->sphereGeom.cullFace, labels, 3);
+					static const vector<string> cullLabels{ "None", "Back", "Front" };
+					ofxPreset::Gui::AddRadio(this->sphereGeom.cullFace, cullLabels, 3);
 					ofxPreset::Gui::AddParameter(this->sphereGeom.color);
 					ofxPreset::Gui::AddParameter(this->sphereGeom.alpha);
 					ofxPreset::Gui::AddParameter(this->parameters.sphere.maskMix);
@@ -174,7 +155,7 @@ namespace entropy
 					ofxPreset::Gui::AddParameter(this->sphereGeom.resolution);
 					ofxPreset::Gui::AddParameter(this->sphereGeom.arcHorz);
 					ofxPreset::Gui::AddParameter(this->sphereGeom.arcVert);
-					ofxPreset::Gui::AddParameter(this->parameters.sphere.orientation);
+					ofxPreset::Gui::AddParameter(this->sphereGeom.orientation);
 
 					ofxPreset::Gui::EndTree(settings);
 				}

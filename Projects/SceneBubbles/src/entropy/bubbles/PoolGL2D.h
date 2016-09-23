@@ -17,7 +17,8 @@ namespace entropy
 		public:
 			PoolGL2D();
 
-			void setup() override;
+			void init() override;
+			void resize() override;
 
 			void reset() override;
 			void draw() override;
@@ -28,6 +29,7 @@ namespace entropy
 			void addDrop() override;
 			void stepRipple() override;
 			void copyResult() override;
+			void mixFrames(float pct) override;
 
 			ofShader shader;
 			ofVboMesh mesh;

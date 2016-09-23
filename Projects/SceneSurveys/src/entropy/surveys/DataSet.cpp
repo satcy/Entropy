@@ -71,13 +71,6 @@ namespace entropy
 			vector<glm::vec3> coordData(coordCount);
 			coordDataSet->read(coordData.data());
 
-			for (int i = 0; i < coordData.size(); ++i)
-			{
-				this->coordinates.push_back(glm::vec3(ofDegToRad(coordData[i].x), ofDegToRad(coordData[i].y), coordData[i].z));
-				this->minRadius = std::min(this->minRadius, coordData[i].z);
-				this->maxRadius = std::max(this->maxRadius, coordData[i].z);
-			}
-
 			// Load the mass data.
 			auto massDataSet = h5Group->loadDataSet("Masses");
 			int massCount = massDataSet->getDimensionSize(0) / stride;
@@ -100,8 +93,12 @@ namespace entropy
 			{
 				if (coordData[i].z > 0.0f)
 				{
-					this->coordinates.push_back(coordData[i]);
+					this->coordinates.push_back(glm::vec3(ofDegToRad(coordData[i].x), ofDegToRad(coordData[i].y), coordData[i].z));
+					this->minRadius = std::min(this->minRadius, coordData[i].z);
+					this->maxRadius = std::max(this->maxRadius, coordData[i].z);
+
 					this->masses.push_back(massData[i]);
+					
 					if (particleType == "PartType6")
 					{
 						this->starFormationRates.push_back(sfrData[i]);
@@ -127,6 +124,7 @@ namespace entropy
 			static const auto kLongitudeMin = 0;
 			static const auto kLongitudeMax = TWO_PI;
 
+			shader.setUniform1f("uCutRadius", ofMap(parameters.cutRadius, 0.0f, 1.0f, this->minRadius, this->maxRadius));
 			shader.setUniform1f("uMinRadius", ofMap(parameters.minRadius, 0.0f, 1.0f, this->minRadius, this->maxRadius));
 			shader.setUniform1f("uMaxRadius", ofMap(parameters.maxRadius, 0.0f, 1.0f, this->minRadius, this->maxRadius));
 			shader.setUniform1f("uMinLatitude", ofMap(parameters.minLatitude, 0.0f, 1.0f, kLatitudeMin, kLatitudeMax));
@@ -144,6 +142,7 @@ namespace entropy
 		{
 			if (ofxPreset::Gui::BeginTree(this->parameters, settings))
 			{
+				ofxPreset::Gui::AddParameter(this->parameters.cutRadius);
 				ofxPreset::Gui::AddRange("Radius", this->parameters.minRadius, this->parameters.maxRadius);
 				ofxPreset::Gui::AddRange("Latitude", this->parameters.minLatitude, this->parameters.maxLatitude);
 				ofxPreset::Gui::AddRange("Longitude", this->parameters.minLongitude, this->parameters.maxLongitude);
