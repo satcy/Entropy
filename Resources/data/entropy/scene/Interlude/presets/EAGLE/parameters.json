@@ -202,7 +202,7 @@
                     "Width": "0"
                 },
                 "File Path": "entropy\\scene\\Interlude\\videos\\Intro_h264.mov",
-                "Loop": "1",
+                "Loop": "0",
                 "Scrub To Timeline": "0",
                 "Transition": {
                     "Duration": "1",
@@ -226,7 +226,7 @@
                     "Color": "1, 1, 1, 1",
                     "Width": "0"
                 },
-                "File Path": "entropy\\scene\\Interlude\\videos\\EAGLE_h264.mov",
+                "File Path": "C:\\assets\\entropy\\scene\\Interlude\\videos\\EAGLE_h264.mov",
                 "Loop": "0",
                 "Scrub To Timeline": "0",
                 "Transition": {
@@ -240,9 +240,9 @@
             "Video": {
                 "Base": {
                     "Anchor": "0.5, 0.5",
-                    "Background": "0, 0, 0, 0",
+                    "Background": "0, 0, 0, 1",
                     "Horz Align": "1",
-                    "Layout": "0",
+                    "Layout": "1",
                     "Size": "1",
                     "Surface": "1",
                     "Vert Align": "1"
@@ -251,8 +251,8 @@
                     "Color": "1, 1, 1, 1",
                     "Width": "0"
                 },
-                "File Path": "entropy\\scene\\Interlude\\videos\\Lines1_h264.mov",
-                "Loop": "1",
+                "File Path": "C:\\assets\\entropy\\scene\\Interlude\\videos\\Intro_Front_h264.mov",
+                "Loop": "0",
                 "Scrub To Timeline": "0",
                 "Transition": {
                     "Duration": "1",
@@ -362,7 +362,7 @@
             "Bloom": {
                 "Brightness Threshold": "1",
                 "Debug Blur": "0",
-                "Enabled": "1",
+                "Enabled": "0",
                 "Num Passes": "1",
                 "Sigma": "0.9"
             },

@@ -282,7 +282,7 @@
             "Color": {
                 "Brightness": "-0.412",
                 "Contrast": "1",
-                "Exposure": "4",
+                "Exposure": "0",
                 "Gamma": "2.2",
                 "Tonemapping": "6"
             },
@@ -358,7 +358,7 @@
             "Scale": "3.10969"
         },
         "Sphere": {
-            "Alpha": "0.826716",
+            "Alpha": "0",
             "Arc Horizontal": "1",
             "Arc Vertical": "1",
             "Auto Draw": "1",

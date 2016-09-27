@@ -41,7 +41,7 @@
             "Tumble Override": "0",
             "ofEasyCam": {
                 "aspectRatio": 3.3955078125,
-                "distance": 0.529601633548737,
+                "distance": 0.529601216316223,
                 "drag": 0.899999976158142,
                 "farClip": 6.0,
                 "forceAspectRatio": true,
@@ -100,7 +100,7 @@
     "Inflation": {
         "BigBang duration": "0.25",
         "Control Camera": "0",
-        "Current rate of expansion": "0.0532351",
+        "Current rate of expansion": "0.0526729",
         "Hubble (min) wavelength for any octave": "4",
         "Pre BigBang wobble duration": "3",
         "Rate of expansion after bigbang": "0.05",
@@ -121,8 +121,8 @@
         "inflation transition in, duration sec.": "0.5",
         "inflation transition out, sec.": "2",
         "inflation transition plateau, sec.": "0.3",
-        "transition blobs out. (s)": "0.5",
-        "transition particles in. (s)": "1"
+        "transition blobs out. (s)": "0.851",
+        "transition particles in. (s)": "2.088"
     },
     "Mappings": {
         "Box_Back::Alpha": "1",
@@ -400,10 +400,10 @@
     "Post Effects": {
         "Post Effects Back": {
             "Bloom": {
-                "Brightness Threshold": "0.149",
+                "Brightness Threshold": "0.056",
                 "Debug Blur": "0",
                 "Enabled": "1",
-                "Num Passes": "3",
+                "Num Passes": "6",
                 "Sigma": "3.387"
             },
             "Color": {
@@ -427,9 +427,9 @@
             "Bloom": {
                 "Brightness Threshold": "0.303",
                 "Debug Blur": "0",
-                "Enabled": "0",
-                "Num Passes": "7",
-                "Sigma": "0.5"
+                "Enabled": "1",
+                "Num Passes": "6",
+                "Sigma": "1.8825"
             },
             "Color": {
                 "Brightness": "0",
@@ -451,9 +451,9 @@
     },
     "Renderers": {
         "Renderer Back": {
-            "Fade From": "4.60613",
+            "Fade From": "4.71804",
             "Fade Power": "2",
-            "Fade To": "2.14619",
+            "Fade To": "2.17211",
             "Fill": "1",
             "Fill Alpha": "0.268",
             "Fog Enabled": "1",
@@ -465,20 +465,20 @@
             "Spherical Clip": "1",
             "Use Lights": "0",
             "Wireframe": "1",
-            "Wireframe Alpha": "0.015",
+            "Wireframe Alpha": "0.031",
             "Wobbly Clip": "0"
         },
         "Renderer Front": {
-            "Fade From": "4.60613",
+            "Fade From": "4.71804",
             "Fade Power": "2",
-            "Fade To": "2.14619",
+            "Fade To": "2.17211",
             "Fill": "1",
             "Fill Alpha": "0",
             "Fog Enabled": "1",
             "Fog Max Distance": "8.04",
             "Fog Min Distance": "0",
             "Fog Power": "4.743",
-            "Fog Start Distance": "1.41663",
+            "Fog Start Distance": "1.41849",
             "Shade Normals": "0",
             "Spherical Clip": "1",
             "Use Lights": "0",
@@ -489,10 +489,10 @@
     },
     "transition particles": {
         "color": "1, 1, 1, 1",
-        "noise field attraction": "5.928",
-        "particle every x vertices": "100",
-        "repulsion": "0.001",
+        "noise field attraction": "8.763",
+        "particle every x vertices": "150",
+        "repulsion": "0.026",
         "scale": "2.02",
-        "speed": "0.081"
+        "speed": "0.1"
     }
 }
